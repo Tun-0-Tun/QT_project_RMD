@@ -1,5 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
+    QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView
 from PyQt5.QtGui import QColor
 
 class AddRowDialog(QDialog):
@@ -9,6 +10,7 @@ class AddRowDialog(QDialog):
         self.setWindowTitle('Добавление строки')
 
         self.column_names = [
+            "id",
             "личный номер (при наличии)",
             "в/зв по запасу (при наличии)",
             "Пол",
@@ -35,11 +37,11 @@ class AddRowDialog(QDialog):
 
         self.labels = []
         self.line_edits = []
+        for i in range(1, len(self.column_names)):
 
-        for i in range(len(self.column_names)):
             cur_name = self.column_names[i]
             label = QLabel(cur_name, self)
-            if cur_name == 'Округ' or i > 13:
+            if cur_name == 'Округ' or i > 14:
                 combo_box = QComboBox(self)
                 combo_box.addItems(["Вариант 1", "Вариант 2", "Вариант 3"])
                 self.labels.append(label)
@@ -86,32 +88,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('Главное окно')
 
-        self.table = QTableWidget()
-        self.column_names =  [
-            "личный номер (при наличии)",
-            "в/зв по запасу (при наличии)",
-            "Пол",
-            "Фамилия",
-            "Имя",
-            "Отчество",
-            "Число, год рождения",
-            "Контакты (тел. адррес эл. почты)",
-            "Статус",
-            "Отдельная квота",
-            "Выпускник СВУ, ПКУ, КК Минобороны",
-            "Округ",
-            "Субъект",
-            "Выбор ВК",
-            "Наименование вуза",
-            "Дата регистрации заявления",
-            "Признак отбора",
-            "Дата направления учебного центра",
-            "Исходящий номер документа",
-            "Примечание"
-            ]
-        self.table.setColumnCount(len(self.column_names))
-        self.table.setHorizontalHeaderLabels(self.column_names)
-        self.table.resizeColumnsToContents()
+        self.table_settings()
 
 
         self.add_row_button = QPushButton('Добавить строку')
@@ -133,15 +110,58 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
 
-
+    def table_settings(self):
+        self.table = QTableWidget()
+        self.column_names = [
+            "ID",
+            "личный номер (при наличии)",
+            "в/зв по запасу (при наличии)",
+            "Пол",
+            "Фамилия",
+            "Имя",
+            "Отчество",
+            "Число, год рождения",
+            "Контакты (тел. адррес эл. почты)",
+            "Статус",
+            "Отдельная квота",
+            "Выпускник СВУ, ПКУ, КК Минобороны",
+            "Округ",
+            "Субъект",
+            "Выбор ВК",
+            "Наименование вуза",
+            "Дата регистрации заявления",
+            "Признак отбора",
+            "Дата направления учебного центра",
+            "Исходящий номер документа",
+            "Примечание",
+            "Резервная_1",
+            "Резервная_2",
+            "Резервная_3",
+            "Резервная_4",
+            "Резервная_5"
+        ]
+        self.table.setColumnCount(len(self.column_names))
+        self.table.setHorizontalHeaderLabels(self.column_names)
+        self.table.resizeColumnsToContents()
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionMode(QTableWidget.ExtendedSelection)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.horizontalHeader().setStretchLastSection(True)
     def add_row(self):
         dialog = AddRowDialog(self)
         if dialog.exec_():
             data = dialog.get_data()
+            id = self.table.rowCount()
+            data.insert(0, str(id))
+            print(data)
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
             for i, item in enumerate(data):
                 self.table.setItem(row_position, i, QTableWidgetItem(item))
+
+            for i in range(5): #additional columns
+                self.table.setItem(row_position, self.table.columnCount() - i - 1, QTableWidgetItem(""))
+
             self.set_column_color(1, QColor('blue'))  # второй столбец
             self.set_column_color(2, QColor('blue'))
 
@@ -150,7 +170,9 @@ class MainWindow(QMainWindow):
         if file_path:
             with open(file_path, 'w') as file:
                 for row in range(self.table.rowCount()):
-                    line = ','.join([self.table.item(row, column).text() for column in range(self.table.columnCount())])
+                    line = ','.join([
+                        self.table.item(row, column).text() for column in range(self.table.columnCount() )
+                    ])
                     file.write(line + '\n')
 
     def import_csv(self):
