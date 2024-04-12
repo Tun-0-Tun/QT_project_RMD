@@ -2,6 +2,8 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox
 from PyQt5.QtGui import QColor
+from PyQt5.uic.properties import QtWidgets
+
 
 class Participant:
     def __init__(self, id, rang, sex, surname, name, fathername, birthday, contacts, status, quota, graduated, district, subject, vkSelection, university, registrDate, selectionCriteria, educationCenterDate, documentNumber, note):
@@ -175,18 +177,19 @@ class MainWindow(QMainWindow):
         self.table.setSelectionMode(QTableWidget.ExtendedSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setStretchLastSection(True)
+
+
     def add_row(self):
         student = self.get_selected_row()
         if len(student) == 0:
             return
-        self.SELECTED_INDEX = int(student[0])
+        id = student[0]
         student = student[1:]
-        print(student)
         dialog = EditRowDialog(student)
         if dialog.exec_():
             data = dialog.get_data()
-            row_position = self.table.rowCount()
-            self.table.insertRow(row_position)
+            data.insert(0, str(id))
+            row_position = self.SELECTED_INDEX # ищем строку с нужным номером
             for i, item in enumerate(data):
                 self.table.setItem(row_position, i, QTableWidgetItem(item))
             self.set_column_color(1, QColor('blue'))  # второй столбец
@@ -201,6 +204,7 @@ class MainWindow(QMainWindow):
             retval = msg_box.exec_()
 
             return values
+        self.SELECTED_INDEX = int(self.table.selectedItems()[0].row())
         for selected_item in self.table.selectedItems():
             # create [item from col 0, item from col 1]
             values.insert(selected_item.column(), selected_item.text())
