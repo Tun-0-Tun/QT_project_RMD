@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.design_set()
         self.db()
+        self.update_table_view()
 
     #FORM DESIGN
     def table_settings(self):
@@ -164,6 +165,7 @@ class MainWindow(QMainWindow):
         Birthday DATETIME NOT NULL,
         Contacts TEXT NOT NULL,
         Status  TEXT,
+        SeparateQuota TEXT,
         Graduated BOOL NOT NULL,
         District TEXT NOT NULL,
         Subject TEXT NOT NULL,
@@ -181,29 +183,93 @@ class MainWindow(QMainWindow):
         ADD5)''')
         connection.commit()
         connection.close()
-    #FUNCTIONS
+    def sql_request_organizer(self):
+        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        cursor = connection.cursor()
+        keys = self.checkable_combobox_list.TotalDict.keys()
+        request = ''
+        for k in keys:
+            request += self.sql_request(cursor,k, self.checkable_combobox_list.TotalDict[k]) + ','
+        request = request[0:len(request) -1]
+        #cursor.execute(f"SELECT * FROM Students ({request})")
+        cursor.execute(f"SELECT * FROM Students")
+        records = cursor.fetchall()
+        print(records)
+        connection.commit()
+        connection.close()
+        return records
+    def sql_request(self, cursor, columnName, valuesList):
+        values = ''
+        for l in valuesList:
+            if columnName != 'PersonalNumber':
+                values += "'"+ l +"'" + ","
+            else:
+                values += l +","
+        values = values[0:len(values)-1]
+        res = f'WHERE {columnName} IN ({values})'
+        return res
+
+    def add_record(self, list:list):
+        try:
+            connection = sqlite3.connect('GUK_MAIN_DB.db')
+            cursor = connection.cursor()
+
+            for i in range(len(list)):
+                if i != 1:
+                    list[i] = "'" + list[i] + "'"
+            # Добавляем нового пользователя
+            params = ''
+            for s in list:
+                params += s + ','
+            params = params[0:len(params) - 1]
+            columns = 'ID, PersonalNumber, Rang, Sex, Surname, Name, FatherName, Birthday, Contacts, Status, SeparateQuota, Graduated, District, Subject, VK, University, RegistrationDate,SelectionCriteria, ReferalDate, DocumentNumber, Note, ADD1, ADD2, ADD3, ADD4, ADD5'
+            cursor.execute(f'INSERT INTO Students ({columns}) VALUES ({params})')
+            # Сохраняем изменения и закрываем соединение
+            connection.commit()
+            connection.close()
+        except:
+            print("Error occured")
+    #def add_record(self, string:str):
+    ##    connection = sqlite3.connect('GUK_MAIN_DB.db')
+     #   cursor = connection.cursor()
+     #   columns = 'ID, PersonalNumber, Rang, Sex, Surname, Name, FatherName, Birthday, Contacts, Status, SeparateQuota, Graduated, District, Subject, VK, University, RegistrationDate,SelectionCriteria, ReferalDate, DocumentNumber, Note, ADD1, ADD2, ADD3, ADD4, ADD5'
+     #   cursor.execute(f'INSERT INTO Students ({columns}) VALUES ({string})')
+     #   # Сохраняем изменения и закрываем соединение
+     #   connection.commit()
+     #   connection.close()
+    # FUNCTIONS
     def update_table_view(self):
-        #NOTIMPLEMENTED
-        return 0
+        self.table.clear()
+        records = self.sql_request_organizer()
+        for i in range(len(records)):
+            self.add_row_from_db(i, records[i])
+
+    def add_row_from_db(self, row_number, lst):
+        self.table.insertRow(row_number)
+        for i in range(len(lst)):
+            self.table.setItem(row_number, i, QTableWidgetItem(str(lst[i])))
     def add_row(self):
         #...
-        self.checkable_combobox_list.getChosenValues()
-        print(self.checkable_combobox_list.TotalDict)
-        #...
-        student = self.get_selected_row()
-        if len(student) == 0:
-            return
-        id = student[0]
-        student = student[1:]
-        dialog = EditRowDialog(student)
-        if dialog.exec_():
-            data = dialog.get_data()
-            data.insert(0, str(id))
-            row_position = self.SELECTED_INDEX # ищем строку с нужным номером
-            for i, item in enumerate(data):
-                self.table.setItem(row_position, i, QTableWidgetItem(item))
-            self.set_column_color(1, QColor('blue'))  # второй столбец
-            self.set_column_color(2, QColor('blue'))
+        try:
+            self.checkable_combobox_list.getChosenValues()
+            print(self.checkable_combobox_list.TotalDict)
+            #...
+            student = self.get_selected_row()
+            if len(student) == 0:
+                return
+            id = student[0]
+            student = student[1:]
+            dialog = EditRowDialog(student)
+            if dialog.exec_():
+                data = dialog.get_data()
+                data.insert(0, str(id))
+                row_position = self.SELECTED_INDEX # ищем строку с нужным номером
+                for i, item in enumerate(data):
+                    self.table.setItem(row_position, i, QTableWidgetItem(item))
+                self.set_column_color(1, QColor('blue'))  # второй столбец
+                self.set_column_color(2, QColor('blue'))
+        except:
+            print("error occured")
     def get_selected_row(self):
         values = []
         if len(self.table.selectedItems()) == 0:
@@ -237,13 +303,10 @@ class MainWindow(QMainWindow):
                 data = file.readlines()
                 #self.table.setRowCount(0)  # очищаем таблицу перед загрузкой новых данных
                 for line in data:
-                    row_data = line.strip().split(',')
-                    row_position = self.table.rowCount()
-                    self.table.insertRow(row_position)
-                    for i, item in enumerate(row_data):
-                        self.table.setItem(row_position, i, QTableWidgetItem(item))
-                self.set_column_color(3, QColor('blue'))  # второй столбец
-                self.set_column_color(4, QColor('blue'))
+                    line_edited = line[0: len(line) -1] # to remove \n at the end
+                    row_data = line_edited.split(',')
+                    self.add_record(row_data)
+                self.update_table_view()
 
     def set_column_color(self, column, color):
         for row in range(self.table.rowCount()):

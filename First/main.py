@@ -1,7 +1,8 @@
 import sys
 import sqlite3
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
-    QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView
+    QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, \
+    QCalendarWidget
 from PyQt5.QtGui import QColor
 from StaticResources import TableData
 class AddRowDialog(QDialog):
@@ -10,29 +11,7 @@ class AddRowDialog(QDialog):
 
         self.setWindowTitle('Добавление строки')
 
-        self.column_names = [
-            "id",
-            "личный номер (при наличии)",
-            "в/зв по запасу (при наличии)",
-            "Пол",
-            "Фамилия",
-            "Имя",
-            "Отчество",
-            "Число, год рождения",
-            "Контакты (тел. адррес эл. почты)",
-            "Статус",
-            "Отдельная квота",
-            "Выпускник СВУ, ПКУ, КК Минобороны",
-            "Округ",
-            "Субъект",
-            "Выбор ВК",
-            "Наименование вуза",
-            "Дата регистрации заявления",
-            "Признак отбора",
-            "Дата направления учебного центра",
-            "Исходящий номер документа",
-            "Примечание"
-        ]
+        self.column_names = TableData.getShortTableRows()
 
         layout = QGridLayout()
 
@@ -42,28 +21,20 @@ class AddRowDialog(QDialog):
 
             cur_name = self.column_names[i]
             label = QLabel(cur_name, self)
-            if cur_name == 'Округ' or i > 14:
+            if cur_name in TableData.getRussianColumnNames().keys():
                 combo_box = QComboBox(self)
-                combo_box.addItems(["Var_1", "Вариант 2", "Вариант 3"])
+                lst = TableData.getColumnValues()[TableData.getRussianColumnNames()[cur_name]]
+                combo_box.addItems(lst)
                 self.labels.append(label)
                 self.line_edits.append(combo_box)
                 layout.addWidget(label, i, 0)
                 layout.addWidget(combo_box, i, 1)
-            elif cur_name == 'Субъект':
-                combo_box = QComboBox(self)
-                combo_box.addItems(["Var_1", "Вариант 2", "Вариант 3"])
-
+            elif cur_name == 'Число, год рождения':
+                calendar = QCalendarWidget(self)
                 self.labels.append(label)
-                self.line_edits.append(combo_box)
+                self.line_edits.append(calendar)
                 layout.addWidget(label, i, 0)
-                layout.addWidget(combo_box, i, 1)
-            elif cur_name == 'Выбор ВК':
-                combo_box = QComboBox(self)
-                combo_box.addItems(["Var_1", "Вариант 2", "Вариант 3"])
-                self.labels.append(label)
-                self.line_edits.append(combo_box)
-                layout.addWidget(label, i, 0)
-                layout.addWidget(combo_box, i, 1)
+                layout.addWidget(calendar, i, 1)
             else:
                 line_edit = QLineEdit(self)
                 self.labels.append(label)
@@ -80,7 +51,16 @@ class AddRowDialog(QDialog):
         self.setLayout(layout)
 
     def get_data(self):
-        return [input.currentText() if isinstance(input, QComboBox) else input.text() for input in self.line_edits]
+        lst = []
+        for inp in self.line_edits:
+            if isinstance(inp, QComboBox):
+                lst.append(inp.currentText())
+            elif isinstance(inp, QCalendarWidget):
+                lst.append(inp.selectedDate().toString("dd-MM-yyyy"))
+            else:
+                lst.append(inp.text())
+        return lst
+        #return [input.currentText() if isinstance(input, QComboBox) else input.text() for input in self.line_edits]
 
 
 
@@ -89,6 +69,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.design_set()
         self.db()
+        self.update_table_view()
 
     #DESIGN SETTINGS
     def table_settings(self):
@@ -163,7 +144,15 @@ class MainWindow(QMainWindow):
         connection.commit()
         connection.close()
         #lst = ['0', '1', '1', '1', '1', '1', '1', '1', '1', '1', '', '1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', '0', '0', '0', '0', '0']
-        #self.add_student(lst)
+        #self.add_student(lst)\
+    def get_table_rows_count(self):
+        connection = sqlite3.connect('Students_db.db')
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM  Students")
+        res = len(cursor.fetchall())
+        cursor.close()
+        connection.close()
+        return res
     def add_student(self, list):
         connection = sqlite3.connect('Students_db.db')
         cursor = connection.cursor()
@@ -174,10 +163,7 @@ class MainWindow(QMainWindow):
         # Добавляем нового пользователя
         params = ''
         for s in list:
-            if s == '':
-                params += 'empty' + ','
-            else:
-                params += s + ','
+            params += s + ','
         params = params[0:len(params)-1]
         print(params)
         columns = 'ID, PersonalNumber, Rang, Sex, Surname, Name, FatherName, Birthday, Contacts, Status, SeparateQuota, Graduated, District, Subject, VK, University, RegistrationDate,SelectionCriteria, ReferalDate, DocumentNumber, Note, ADD1, ADD2, ADD3, ADD4, ADD5'
@@ -185,12 +171,31 @@ class MainWindow(QMainWindow):
         # Сохраняем изменения и закрываем соединение
         connection.commit()
         connection.close()
+
+    def get_db_rows(self) -> list:
+        connection = sqlite3.connect('Students_db.db')
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM  Students")
+        res = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return res
     #FUNCTIONS
+
+    def update_table_view(self):
+        self.table.clear()
+        records = self.get_db_rows()
+        for i in range(len(records)):
+            self.add_row_from_db(i, records[i])
+    def add_row_from_db(self, row_number:int, lst:list):
+        self.table.insertRow(row_number)
+        for i in range(len(lst)):
+            self.table.setItem(row_number, i, QTableWidgetItem(str(lst[i])))
     def add_row(self):
         dialog = AddRowDialog(self)
         if dialog.exec_():
             data = dialog.get_data()
-            id = self.table.rowCount()
+            id = self.get_table_rows_count()
             data.insert(0, str(id))
             print(data)
             row_position = self.table.rowCount()
