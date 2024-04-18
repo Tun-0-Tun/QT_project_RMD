@@ -1,5 +1,5 @@
 import sys
-import psycopg2
+import sqlite3
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView
 from PyQt5.QtGui import QColor
@@ -44,21 +44,22 @@ class AddRowDialog(QDialog):
             label = QLabel(cur_name, self)
             if cur_name == 'Округ' or i > 14:
                 combo_box = QComboBox(self)
-                combo_box.addItems(["Вариант 1", "Вариант 2", "Вариант 3"])
+                combo_box.addItems(["Var_1", "Вариант 2", "Вариант 3"])
                 self.labels.append(label)
                 self.line_edits.append(combo_box)
                 layout.addWidget(label, i, 0)
                 layout.addWidget(combo_box, i, 1)
             elif cur_name == 'Субъект':
                 combo_box = QComboBox(self)
-                combo_box.addItems(["Вариант 1", "Вариант 2", "Вариант 3"])
+                combo_box.addItems(["Var_1", "Вариант 2", "Вариант 3"])
+
                 self.labels.append(label)
                 self.line_edits.append(combo_box)
                 layout.addWidget(label, i, 0)
                 layout.addWidget(combo_box, i, 1)
             elif cur_name == 'Выбор ВК':
                 combo_box = QComboBox(self)
-                combo_box.addItems(["Вариант 1", "Вариант 2", "Вариант 3"])
+                combo_box.addItems(["Var_1", "Вариант 2", "Вариант 3"])
                 self.labels.append(label)
                 self.line_edits.append(combo_box)
                 layout.addWidget(label, i, 0)
@@ -87,6 +88,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.design_set()
+        self.db()
 
     #DESIGN SETTINGS
     def table_settings(self):
@@ -121,6 +123,68 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.import_button)
 
         self.setCentralWidget(central_widget)
+    #DB
+    def db(self):
+        connection = sqlite3.connect('Students_db.db')
+        connection.close()
+        self.create_table()
+
+    def create_table(self):
+        connection = sqlite3.connect('Students_db.db')
+        cursor = connection.cursor()
+        cursor.execute('''
+           CREATE TABLE IF NOT EXISTS Students (
+           ID PRIMARY KEY,
+           PersonalNumber INTEGER,
+           Rang TEXT,
+           Sex TEXT NOT NULL,
+           Surname TEXT NOT NULL,
+           Name TEXT NOT NULL,
+           FatherName TEXT,
+           Birthday TEXT NOT NULL,
+           Contacts TEXT NOT NULL,
+           Status  TEXT,
+           SeparateQuota TEXT,
+           Graduated BOOL NOT NULL,
+           District TEXT NOT NULL,
+           Subject TEXT NOT NULL,
+           VK TEXT NOT NULL,
+           University TEXT, 
+           RegistrationDate TEXT NOT NULL,
+           SelectionCriteria TEXT NOT NULL,
+           ReferalDate TEXT NOT NULL,
+           DocumentNumber TEXT NOT NULL,
+           Note TEXT,
+           ADD1, 
+           ADD2,
+           ADD3,
+           ADD4,
+           ADD5)''')
+        connection.commit()
+        connection.close()
+        #lst = ['0', '1', '1', '1', '1', '1', '1', '1', '1', '1', '', '1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', 'Вариант 1', '0', '0', '0', '0', '0']
+        #self.add_student(lst)
+    def add_student(self, list):
+        connection = sqlite3.connect('Students_db.db')
+        cursor = connection.cursor()
+
+        for i in range(len(list)):
+            if i != 1:
+                list[i] = "'" + list[i] + "'"
+        # Добавляем нового пользователя
+        params = ''
+        for s in list:
+            if s == '':
+                params += 'empty' + ','
+            else:
+                params += s + ','
+        params = params[0:len(params)-1]
+        print(params)
+        columns = 'ID, PersonalNumber, Rang, Sex, Surname, Name, FatherName, Birthday, Contacts, Status, SeparateQuota, Graduated, District, Subject, VK, University, RegistrationDate,SelectionCriteria, ReferalDate, DocumentNumber, Note, ADD1, ADD2, ADD3, ADD4, ADD5'
+        cursor.execute(f'INSERT INTO Students ({columns}) VALUES ({params})')
+        # Сохраняем изменения и закрываем соединение
+        connection.commit()
+        connection.close()
     #FUNCTIONS
     def add_row(self):
         dialog = AddRowDialog(self)
@@ -133,10 +197,14 @@ class MainWindow(QMainWindow):
             self.table.insertRow(row_position)
             for i, item in enumerate(data):
                 self.table.setItem(row_position, i, QTableWidgetItem(item))
-
             for i in range(5): #additional columns
                 self.table.setItem(row_position, self.table.columnCount() - i - 1, QTableWidgetItem(""))
 
+            lst = data
+            for i in range(5):
+                lst.append("0")
+            print(lst)
+            self.add_student(lst)
             self.set_column_color(1, QColor('blue'))  # второй столбец
             self.set_column_color(2, QColor('blue'))
     def export_csv(self):

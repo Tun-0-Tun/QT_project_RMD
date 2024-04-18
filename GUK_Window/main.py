@@ -1,6 +1,7 @@
 import sys
-import psycopg2
-from psycopg2 import Error
+
+import sqlite3
+
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox
@@ -102,7 +103,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.design_set()
-        #self.db()
+        self.db()
 
     #FORM DESIGN
     def table_settings(self):
@@ -145,16 +146,41 @@ class MainWindow(QMainWindow):
 
     #DataBase
     def db(self):
-        connection = psycopg2.connect(user="postgres",
-                                          # пароль, который указали при установке PostgreSQL
-                                          password="1111",
-                                          host="127.0.0.1",
-                                          port="5432")
-        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        # Курсор для выполнения операций с базой данных
+        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        connection.close()
+        self.create_table()
+    def create_table(self):
+        connection = sqlite3.connect('GUK_MAIN_DB.db')
         cursor = connection.cursor()
-        sql_create_database = 'create database postgres_db'
-        cursor.execute(sql_create_database)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Students (
+        ID  PRIMARY KEY,
+        PersonalNumber INTEGER,
+        Rang TEXT,
+        Sex TEXT NOT NULL,
+        Surname TEXT NOT NULL,
+        Name TEXT NOT NULL,
+        FatherName TEXT,
+        Birthday DATETIME NOT NULL,
+        Contacts TEXT NOT NULL,
+        Status  TEXT,
+        Graduated BOOL NOT NULL,
+        District TEXT NOT NULL,
+        Subject TEXT NOT NULL,
+        VK TEXT NOT NULL,
+        University TEXT, 
+        RegistrationDate DATETIME NOT NULL,
+        SelectionCriteria TEXT NOT NULL,
+        ReferalDate DATETIME NOT NULL,
+        DocumentNumber TEXT NOT NULL,
+        Note TEXT,
+        ADD1, 
+        ADD2,
+        ADD3,
+        ADD4,
+        ADD5)''')
+        connection.commit()
+        connection.close()
     #FUNCTIONS
     def update_table_view(self):
         #NOTIMPLEMENTED
