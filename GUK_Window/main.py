@@ -1,30 +1,19 @@
 import sys
+import psycopg2
+from psycopg2 import Error
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox
 from PyQt5.QtGui import QColor
+
+import MyQTWidgets.checkableComboBox
+import MyQTWidgets.CheckableComboBoxesList
+from MyQTWidgets import checkableComboBox
 from PyQt5.uic.properties import QtWidgets
 
 
-class Participant:
-    def __init__(self, id, rang, sex, surname, name, fathername, birthday, contacts, status, quota, graduated, district, subject, vkSelection, university, registrDate, selectionCriteria, educationCenterDate, documentNumber, note):
-        self.id = id
-        self.rang = rang
-        self.sex = sex
-        self.surname = surname
-        self.name = name
-        self.fathername = fathername
-        self.birthday = birthday
-        self.contacts = contacts
-        self.status = status
-        self.quota = quota
-        self.graduated = graduated
-        self.district = district
-        self.subject = subject
-        self.vkSelection = vkSelection
-        self.university = university
-        self.regitsrDate= registrDate
-        self.selectionCriteria, self.educationCenterDate, self.documentNumber, self.note =selectionCriteria, educationCenterDate, documentNumber, note
-        self.stringList = [id, rang, sex, surname, name, fathername, birthday, contacts, status, quota, graduated, district, subject, vkSelection, university, registrDate, selectionCriteria, educationCenterDate, documentNumber, note]
+from StaticResources import TableData
+
 class EditRowDialog(QDialog):
     def __init__(self, student):
         super().__init__(None)
@@ -112,11 +101,24 @@ class EditRowDialog(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.design_set()
+        #self.db()
 
+    #FORM DESIGN
+    def table_settings(self):
+        self.table = QTableWidget()
+        self.column_names =  TableData.getTableRows()
+        self.table.setColumnCount(len(self.column_names))
+        self.table.setHorizontalHeaderLabels(self.column_names)
+        self.table.resizeColumnsToContents()
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionMode(QTableWidget.ExtendedSelection)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.horizontalHeader().setStretchLastSection(True)
+    def design_set(self):
         self.setWindowTitle('Главное окно')
 
         self.table_settings()
-
 
         self.add_row_button = QPushButton('Редактировать строку')
         self.add_row_button.clicked.connect(self.add_row)
@@ -127,59 +129,41 @@ class MainWindow(QMainWindow):
 
         self.import_button = QPushButton('Импорт из CSV')
         self.import_button.clicked.connect(self.import_csv)
-
+        self.checkable_combobox_list = MyQTWidgets.CheckableComboBoxesList.MyWidget(self)
+        self.checkable_combobox_list.setGeometry(200, 150, 150, 30)
+        self.checkable_combobox_list.createComboBoxes(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
 
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
+        layout.addWidget(self.checkable_combobox_list)
         layout.addWidget(self.table)
         layout.addWidget(self.add_row_button)
         layout.addWidget(self.export_button)
         layout.addWidget(self.import_button)
 
-
         self.setCentralWidget(central_widget)
 
-#table settings region
-    def table_settings(self):
-        self.table = QTableWidget()
-        self.column_names = [
-            "ID",
-            "личный номер (при наличии)",
-            "в/зв по запасу (при наличии)",
-            "Пол",
-            "Фамилия",
-            "Имя",
-            "Отчество",
-            "Число, год рождения",
-            "Контакты (тел. адррес эл. почты)",
-            "Статус",
-            "Отдельная квота",
-            "Выпускник СВУ, ПКУ, КК Минобороны",
-            "Округ",
-            "Субъект",
-            "Выбор ВК",
-            "Наименование вуза",
-            "Дата регистрации заявления",
-            "Признак отбора",
-            "Дата направления учебного центра",
-            "Исходящий номер документа",
-            "Примечание",
-            "Резервная_1",
-            "Резервная_2",
-            "Резервная_3",
-            "Резервная_4",
-            "Резервная_5"
-        ]
-        self.table.setColumnCount(len(self.column_names))
-        self.table.setHorizontalHeaderLabels(self.column_names)
-        self.table.resizeColumnsToContents()
-        self.table.setAlternatingRowColors(True)
-        self.table.setSelectionMode(QTableWidget.ExtendedSelection)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.horizontalHeader().setStretchLastSection(True)
-
-
+    #DataBase
+    def db(self):
+        connection = psycopg2.connect(user="postgres",
+                                          # пароль, который указали при установке PostgreSQL
+                                          password="1111",
+                                          host="127.0.0.1",
+                                          port="5432")
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        # Курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        sql_create_database = 'create database postgres_db'
+        cursor.execute(sql_create_database)
+    #FUNCTIONS
+    def update_table_view(self):
+        #NOTIMPLEMENTED
+        return 0
     def add_row(self):
+        #...
+        self.checkable_combobox_list.getChosenValues()
+        print(self.checkable_combobox_list.TotalDict)
+        #...
         student = self.get_selected_row()
         if len(student) == 0:
             return

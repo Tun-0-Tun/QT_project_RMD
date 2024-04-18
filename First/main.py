@@ -1,8 +1,9 @@
 import sys
+import psycopg2
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView
 from PyQt5.QtGui import QColor
-
+from StaticResources import TableData
 class AddRowDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -85,11 +86,23 @@ class AddRowDialog(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.design_set()
 
+    #DESIGN SETTINGS
+    def table_settings(self):
+        self.table = QTableWidget()
+        self.column_names =  TableData.getTableRows()
+        self.table.setColumnCount(len(self.column_names))
+        self.table.setHorizontalHeaderLabels(self.column_names)
+        self.table.resizeColumnsToContents()
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionMode(QTableWidget.ExtendedSelection)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.horizontalHeader().setStretchLastSection(True)
+    def design_set(self):
         self.setWindowTitle('Главное окно')
 
         self.table_settings()
-
 
         self.add_row_button = QPushButton('Добавить строку')
         self.add_row_button.clicked.connect(self.add_row)
@@ -107,46 +120,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.export_button)
         layout.addWidget(self.import_button)
 
-
         self.setCentralWidget(central_widget)
-
-    def table_settings(self):
-        self.table = QTableWidget()
-        self.column_names = [
-            "ID",
-            "личный номер (при наличии)",
-            "в/зв по запасу (при наличии)",
-            "Пол",
-            "Фамилия",
-            "Имя",
-            "Отчество",
-            "Число, год рождения",
-            "Контакты (тел. адррес эл. почты)",
-            "Статус",
-            "Отдельная квота",
-            "Выпускник СВУ, ПКУ, КК Минобороны",
-            "Округ",
-            "Субъект",
-            "Выбор ВК",
-            "Наименование вуза",
-            "Дата регистрации заявления",
-            "Признак отбора",
-            "Дата направления учебного центра",
-            "Исходящий номер документа",
-            "Примечание",
-            "Резервная_1",
-            "Резервная_2",
-            "Резервная_3",
-            "Резервная_4",
-            "Резервная_5"
-        ]
-        self.table.setColumnCount(len(self.column_names))
-        self.table.setHorizontalHeaderLabels(self.column_names)
-        self.table.resizeColumnsToContents()
-        self.table.setAlternatingRowColors(True)
-        self.table.setSelectionMode(QTableWidget.ExtendedSelection)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.horizontalHeader().setStretchLastSection(True)
+    #FUNCTIONS
     def add_row(self):
         dialog = AddRowDialog(self)
         if dialog.exec_():
@@ -164,7 +139,6 @@ class MainWindow(QMainWindow):
 
             self.set_column_color(1, QColor('blue'))  # второй столбец
             self.set_column_color(2, QColor('blue'))
-
     def export_csv(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить как CSV", "", "CSV Files (*.csv)")
         if file_path:
@@ -174,7 +148,6 @@ class MainWindow(QMainWindow):
                         self.table.item(row, column).text() for column in range(self.table.columnCount() )
                     ])
                     file.write(line + '\n')
-
     def import_csv(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл CSV", "", "CSV Files (*.csv)")
         if file_path:
