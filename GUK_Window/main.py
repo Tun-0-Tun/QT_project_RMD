@@ -9,6 +9,7 @@ from PyQt5.QtGui import QColor
 
 import MyQTWidgets.checkableComboBox
 import MyQTWidgets.CheckableComboBoxesList
+import StaticResources.TableData
 from MyQTWidgets import checkableComboBox
 from PyQt5.uic.properties import QtWidgets
 
@@ -131,11 +132,9 @@ class MainWindow(QMainWindow):
 
         self.import_button = QPushButton('Импорт из CSV')
         self.import_button.clicked.connect(self.import_csv)
-        self.checkable_combobox_list = MyQTWidgets.CheckableComboBoxesList.MyWidget(self)
-        self.checkable_combobox_list.setGeometry(200, 150, 150, 30)
-        self.checkable_combobox_list.createComboBoxes(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
-
+        self.create_filter_widget()
         central_widget = QWidget()
+
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.checkable_combobox_list)
         layout.addWidget(self.table)
@@ -144,6 +143,27 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.import_button)
 
         self.setCentralWidget(central_widget)
+    def create_filter_widget(self):
+        self.checkable_combobox_list = MyQTWidgets.CheckableComboBoxesList.MyWidget(self)
+        self.checkable_combobox_list.setGeometry(200, 150, 150, 30)
+        self.checkable_combobox_list.createComboBoxes(StaticResources.TableData.getColumnValues())
+    #Table
+    def update_table_view(self):
+        self.table.setRowCount(0)
+        records = self.sql_request_organizer()
+        for i in range(len(records)):
+            self.add_row_from_db(i, records[i])
+
+    def update_table_filter_view(self):
+        records = self.sql_request_organizer()
+        self.table.setRowCount(0)
+        for i in range(len(records)):
+            self.add_row_from_db(i, records[i])
+
+    def add_row_from_db(self, row_number, lst):
+        self.table.insertRow(row_number)
+        for i in range(len(lst)):
+            self.table.setItem(row_number, i, QTableWidgetItem(str(lst[i])))
 
     #DataBase
     def db(self):
@@ -186,13 +206,16 @@ class MainWindow(QMainWindow):
     def sql_request_organizer(self):
         connection = sqlite3.connect('GUK_MAIN_DB.db')
         cursor = connection.cursor()
+        self.checkable_combobox_list.getChosenValues()
         keys = self.checkable_combobox_list.TotalDict.keys()
         request = ''
         for k in keys:
-            request += self.sql_request(cursor,k, self.checkable_combobox_list.TotalDict[k]) + ','
-        request = request[0:len(request) -1]
+            request += self.sql_request(cursor,k, self.checkable_combobox_list.TotalDict[k]) + 'AND '
+        request = request[0:len(request) -4]
+        if len(request) > 0:
+            request = "WHERE " + request
         #cursor.execute(f"SELECT * FROM Students ({request})")
-        cursor.execute(f"SELECT * FROM Students")
+        cursor.execute(f"SELECT * FROM Students {request}")
         records = cursor.fetchall()
         print(records)
         connection.commit()
@@ -206,10 +229,12 @@ class MainWindow(QMainWindow):
             else:
                 values += l +","
         values = values[0:len(values)-1]
-        res = f'WHERE {columnName} IN ({values})'
+        res = f'{columnName} IN ({values})'
         return res
 
     def add_record(self, list:list):
+        if not(self.check_record_uniqness(list)):
+            return
         try:
             connection = sqlite3.connect('GUK_MAIN_DB.db')
             cursor = connection.cursor()
@@ -229,25 +254,33 @@ class MainWindow(QMainWindow):
             connection.close()
         except:
             print("Error occured")
-    #def add_record(self, string:str):
-    ##    connection = sqlite3.connect('GUK_MAIN_DB.db')
-     #   cursor = connection.cursor()
-     #   columns = 'ID, PersonalNumber, Rang, Sex, Surname, Name, FatherName, Birthday, Contacts, Status, SeparateQuota, Graduated, District, Subject, VK, University, RegistrationDate,SelectionCriteria, ReferalDate, DocumentNumber, Note, ADD1, ADD2, ADD3, ADD4, ADD5'
-     #   cursor.execute(f'INSERT INTO Students ({columns}) VALUES ({string})')
-     #   # Сохраняем изменения и закрываем соединение
-     #   connection.commit()
-     #   connection.close()
-    # FUNCTIONS
-    def update_table_view(self):
-        self.table.clear()
-        records = self.sql_request_organizer()
-        for i in range(len(records)):
-            self.add_row_from_db(i, records[i])
+    def check_record_uniqness(self, record:list) -> bool: # if record is unique returns true
+        id = str(record[0])
+        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM  Students WHERE ID = {id}")
+        tmp = len(cursor.fetchall())
+        connection.commit()
+        connection.close()
+        if tmp == 0:
+            return True
+        else:
+            return False
+        #id = str(record[0])
+        #try:
+        #    connection = sqlite3.connect('GUK_MAIN_DB.db')
+        #    cursor = connection.cursor()
+        #    cursor.execute(f"SELECT * FROM  Students WHERE ID = {id}")
+        #    connection.commit()
+        #    connection.close()
+        #    tmp = len(cursor.fetchall())
+        #    return tmp == 0
+        #except:
+        #    print("Error occured")
+        #    return False
 
-    def add_row_from_db(self, row_number, lst):
-        self.table.insertRow(row_number)
-        for i in range(len(lst)):
-            self.table.setItem(row_number, i, QTableWidgetItem(str(lst[i])))
+    # FUNCTIONS
+
     def add_row(self):
         #...
         try:
@@ -289,6 +322,7 @@ class MainWindow(QMainWindow):
 
 
     def export_csv(self):
+        self.update_table_filter_view()
         file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить как CSV", "", "CSV Files (*.csv)")
         if file_path:
             with open(file_path, 'w') as file:
@@ -301,7 +335,6 @@ class MainWindow(QMainWindow):
         if file_path:
             with open(file_path, 'r') as file:
                 data = file.readlines()
-                #self.table.setRowCount(0)  # очищаем таблицу перед загрузкой новых данных
                 for line in data:
                     line_edited = line[0: len(line) -1] # to remove \n at the end
                     row_data = line_edited.split(',')

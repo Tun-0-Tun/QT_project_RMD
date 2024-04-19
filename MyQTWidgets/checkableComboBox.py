@@ -23,7 +23,7 @@ class CheckableComboBox(QComboBox):
         return 0
 
     # when any item get pressed
-    def setObjectList(self, list):
+    def setObjectList(self, list:list):
         self.addItems(list)
         for i in range(len(list)):
             self.model().item(i).setCheckState(Qt.Checked)

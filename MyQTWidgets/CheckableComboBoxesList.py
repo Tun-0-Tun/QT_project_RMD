@@ -15,11 +15,13 @@ class MyWidget(QtWidgets.QWidget):
         self.setLayout(self.grid)
         self.BaseList = []
         self.TotalDict = dict()
-    def createComboBoxes(self, lst):
+    def createComboBoxes(self, dct:dict):
         self.comboBoxesList = []
-        for i  in range(len(lst)):
+        lst = list(dct.keys())
+        for i in range(len(lst)):
             tmp = MyQTWidgets.checkableComboBox.CheckableComboBox(self)
-            tmp.setObjectList(lst)
+            a = dct[lst[i]]
+            tmp.setObjectList(a)
             lab = QLabel(self)
             lab.setText(lst[i])
             self.comboBoxesList.append(tmp)
