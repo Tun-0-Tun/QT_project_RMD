@@ -2,10 +2,12 @@ import sys
 
 import sqlite3
 
+from PyQt5.QtCore import QSize
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
-    QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox
-from PyQt5.QtGui import QColor
+    QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox, \
+    QAction, QToolBar, QCheckBox, QStatusBar
+from PyQt5.QtGui import QColor, QIcon
 
 import MyQTWidgets.checkableComboBox
 import MyQTWidgets.CheckableComboBoxesList
@@ -121,6 +123,7 @@ class MainWindow(QMainWindow):
     def design_set(self):
         self.setWindowTitle('Главное окно')
 
+        self.create_menu()
         self.table_settings()
 
         self.add_row_button = QPushButton('Редактировать строку')
@@ -128,7 +131,7 @@ class MainWindow(QMainWindow):
         self.table.selectedItems()
 
         self.export_button = QPushButton('Экспорт в CSV')
-        self.export_button.clicked.connect(self.export_csv)
+        self.export_button.clicked.connect(self.clever_export)
 
         self.import_button = QPushButton('Импорт из CSV')
         self.import_button.clicked.connect(self.import_csv)
@@ -147,6 +150,20 @@ class MainWindow(QMainWindow):
         self.checkable_combobox_list = MyQTWidgets.CheckableComboBoxesList.MyWidget(self)
         self.checkable_combobox_list.setGeometry(200, 150, 150, 30)
         self.checkable_combobox_list.createComboBoxes(StaticResources.TableData.getColumnValues())
+    def create_menu(self):
+
+        menu = self.menuBar()
+        file_menu = menu.addMenu("&ФАЙЛ")
+        button_action_1 = QAction( "&Зарузить данные из ВК", self)
+        button_action_1.triggered.connect(self.import_csv)
+        file_menu.addAction(button_action_1)
+        button_action_2 = QAction("&Загрузить данные из ВВУЗ", self)
+        file_menu.addAction(button_action_2)
+        button_action_3 = QAction("&Выгрузить данные в ВК", self)
+        button_action_3.triggered.connect(self.clever_export)
+        file_menu.addAction(button_action_3)
+
+
     #Table
     def update_table_view(self):
         self.table.setRowCount(0)
@@ -330,6 +347,29 @@ class MainWindow(QMainWindow):
                     line = ','.join([self.table.item(row, column).text() for column in range(self.table.columnCount())])
                     file.write(line + '\n')
 
+    def clever_export(self): #expors only data about VUZ
+        used_columns = ['ID', 'University', 'RegistrationDate ', 'SelectionCriteria', 'ReferalDate'] # позже перенести в static resources
+        rows = self.get_rows(used_columns)
+        file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить как CSV", "", "CSV Files (*.csv)")
+        if file_path:
+            with open(file_path, 'w') as file:
+                for row in rows:
+                    file.write(','.join(row).removesuffix(',') + '\n')
+
+
+    def get_rows(self, columns:list) -> list:
+        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        cursor = connection.cursor()
+        str_columns = ''
+        for col in columns:
+            str_columns += col + ','
+        str_columns = str_columns[0:len(str_columns) - 1]
+        cursor.execute(f"SELECT {str_columns} from Students")
+        records = cursor.fetchall()
+        print(records)
+        connection.commit()
+        connection.close()
+        return records
     def import_csv(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл CSV", "", "CSV Files (*.csv)")
         if file_path:
