@@ -2,11 +2,11 @@ import sys
 
 import sqlite3
 
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize, QDate
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, QMessageBox, \
-    QAction, QToolBar, QCheckBox, QStatusBar
+    QAction, QToolBar, QCheckBox, QStatusBar, QCalendarWidget
 from PyQt5.QtGui import QColor, QIcon
 
 import MyQTWidgets.checkableComboBox
@@ -18,34 +18,13 @@ from PyQt5.uic.properties import QtWidgets
 
 from StaticResources import TableData
 
+
 class EditRowDialog(QDialog):
     def __init__(self, student):
         super().__init__(None)
 
         self.setWindowTitle('Изменение строки')
-
-        self.column_names = [
-            "личный номер (при наличии)",
-            "в/зв по запасу (при наличии)",
-            "Пол",
-            "Фамилия",
-            "Имя",
-            "Отчество",
-            "Число, год рождения",
-            "Контакты (тел. адррес эл. почты)",
-            "Статус",
-            "Отдельная квота",
-            "Выпускник СВУ, ПКУ, КК Минобороны",
-            "Округ",
-            "Субъект",
-            "Выбор ВК",
-            "Наименование вуза",
-            "Дата регистрации заявления",
-            "Признак отбора",
-            "Дата направления учебного центра",
-            "Исходящий номер документа",
-            "Примечание"
-        ]
+        self.column_names = StaticResources.TableData.getShortTableRows()
 
         layout = QGridLayout()
 
@@ -53,40 +32,34 @@ class EditRowDialog(QDialog):
         self.line_edits = []
 
         print('Building columns')
-        for i in range(len(self.column_names)):
+        for i in range(1, len(self.column_names)):
             cur_name = self.column_names[i]
             label = QLabel(cur_name, self)
-            label.text = student[i]
-            if cur_name == 'Округ' or i > 13:
+            #label.text = student[i-1]
+            if cur_name in TableData.getRussianColumnNames().keys():
                 combo_box = QComboBox(self)
-                combo_box.addItems(["Вариант 1", "Вариант 2", "Вариант 3"])
-                combo_box.setCurrentText(student[i])
+                lst = TableData.getColumnValues()[TableData.getRussianColumnNames()[cur_name]]
+                combo_box.addItems(lst)
+                combo_box.setCurrentText(student[i-1])
                 self.labels.append(label)
                 self.line_edits.append(combo_box)
                 layout.addWidget(label, i, 0)
                 layout.addWidget(combo_box, i, 1)
-            elif cur_name == 'Субъект':
-                combo_box = QComboBox(self)
-                combo_box.addItems(["Вариант 1", "Вариант 2", "Вариант 3"])
-                combo_box.setCurrentText(student[i])
+            elif cur_name == 'Число, год рождения':
+                calendar = QCalendarWidget(self)
+                strs = student[i-1].split('-')
+                date = QDate(int(strs[2]), int(strs[1]), int(strs[0]))
+
+                calendar.setSelectedDate(date)
                 self.labels.append(label)
-                self.line_edits.append(combo_box)
+                self.line_edits.append(calendar)
                 layout.addWidget(label, i, 0)
-                layout.addWidget(combo_box, i, 1)
-            elif cur_name == 'Выбор ВК':
-                combo_box = QComboBox(self)
-                combo_box.addItems(["Вариант 1", "Вариант 2", "Вариант 3"])
-                combo_box.setCurrentText(student[i])
-                self.labels.append(label)
-                self.line_edits.append(combo_box)
-                layout.addWidget(label, i, 0)
-                layout.addWidget(combo_box, i, 1)
+                layout.addWidget(calendar, i, 1)
             else:
                 line_edit = QLineEdit(self)
-                line_edit.setText(student[i])
+                line_edit.setText(student[i-1])
                 self.labels.append(label)
                 self.line_edits.append(line_edit)
-
                 layout.addWidget(label, i, 0)
                 layout.addWidget(line_edit, i, 1)
 
@@ -98,7 +71,16 @@ class EditRowDialog(QDialog):
         self.setLayout(layout)
 
     def get_data(self):
-        return [input.currentText() if isinstance(input, QComboBox) else input.text() for input in self.line_edits]
+        lst = []
+        for inp in self.line_edits:
+            if isinstance(inp, QComboBox):
+                lst.append(inp.currentText())
+            elif isinstance(inp, QCalendarWidget):
+                lst.append(inp.selectedDate().toString("dd-MM-yyyy"))
+            else:
+                lst.append(inp.text())
+        return lst
+        #return [input.currentText() if isinstance(input, QComboBox) else input.text() for input in self.line_edits]
 
 
 
@@ -127,7 +109,7 @@ class MainWindow(QMainWindow):
         self.table_settings()
 
         self.add_row_button = QPushButton('Редактировать строку')
-        self.add_row_button.clicked.connect(self.add_row)
+        self.add_row_button.clicked.connect(self.edit_row)
         self.table.selectedItems()
 
         self.export_button = QPushButton('Экспорт в CSV')
@@ -135,11 +117,14 @@ class MainWindow(QMainWindow):
 
         self.import_button = QPushButton('Импорт из CSV')
         self.import_button.clicked.connect(self.import_csv)
+        self.FilterButton = QPushButton('Применить фильтры')
+        self.FilterButton.clicked.connect(self.update_table_filter_view)
         self.create_filter_widget()
         central_widget = QWidget()
 
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.checkable_combobox_list)
+        layout.addWidget(self.FilterButton)
         layout.addWidget(self.table)
         layout.addWidget(self.add_row_button)
         layout.addWidget(self.export_button)
@@ -296,14 +281,21 @@ class MainWindow(QMainWindow):
         #    print("Error occured")
         #    return False
 
+    def edit_db_row(self, record:list):
+        connection = sqlite3.connect('GUK_MAIN_DB.db')
+        cursor = connection.cursor()
+        columns = StaticResources.TableData.getDBColumnsList()
+        columnsStr = ','.join(columns)
+        newValues = ','.join(record)
+        cursor.execute(f"REPLACE INTO Students ({columnsStr}) VALUES ({newValues});")
+        connection.commit()
+        connection.close()
+
     # FUNCTIONS
 
-    def add_row(self):
+    def edit_row(self):
         #...
         try:
-            self.checkable_combobox_list.getChosenValues()
-            print(self.checkable_combobox_list.TotalDict)
-            #...
             student = self.get_selected_row()
             if len(student) == 0:
                 return
@@ -312,12 +304,19 @@ class MainWindow(QMainWindow):
             dialog = EditRowDialog(student)
             if dialog.exec_():
                 data = dialog.get_data()
-                data.insert(0, str(id))
-                row_position = self.SELECTED_INDEX # ищем строку с нужным номером
-                for i, item in enumerate(data):
-                    self.table.setItem(row_position, i, QTableWidgetItem(item))
-                self.set_column_color(1, QColor('blue'))  # второй столбец
-                self.set_column_color(2, QColor('blue'))
+                data.insert(0, str(id))# edited row
+                for i in range(5):
+                    data.append("")
+                for i in range(0, len(data)):
+                    if i != 1:
+                        data[i] = "'" + data[i] + "'"
+                self.edit_db_row(data)
+                self.update_table_view()
+                #row_position = self.SELECTED_INDEX # ищем строку с нужным номером
+                #for i, item in enumerate(data):
+                #    self.table.setItem(row_position, i, QTableWidgetItem(item))
+                #self.set_column_color(1, QColor('blue'))  # второй столбец
+                #self.set_column_color(2, QColor('blue'))
         except:
             print("error occured")
     def get_selected_row(self):
@@ -335,7 +334,6 @@ class MainWindow(QMainWindow):
             # create [item from col 0, item from col 1]
             values.insert(selected_item.column(), selected_item.text())
         return values
-
 
 
     def export_csv(self):

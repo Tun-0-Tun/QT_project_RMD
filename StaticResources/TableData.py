@@ -76,3 +76,7 @@ def getRussianColumnNames() :
     dictionary['в/зв по запасу (при наличии)'] = 'Rang'
     dictionary['Статус'] = 'Status'
     return dictionary
+
+def getDBColumnsList():
+    return ['ID', 'PersonalNumber', 'Rang', 'Sex' , 'Surname', 'Name', 'FatherName', 'Birthday', 'Contacts', 'Status', 'SeparateQuota', 'Graduated',
+            'District', 'Subject', 'VK', 'University', 'RegistrationDate', 'SelectionCriteria', 'ReferalDate', 'DocumentNumber', 'Note', "ADD1", "ADD2","ADD3", "ADD4","ADD5"]
