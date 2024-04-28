@@ -11,13 +11,13 @@ class AddRowDialog(QDialog):
 
         self.setWindowTitle('Добавление строки')
 
-        self.column_names = TableData.getShortTableRows()
+        self.column_names = TableData.getVKColumns()
 
-        layout = QGridLayout()
+        layout = QGridLayout(self)
 
         self.labels = []
         self.line_edits = []
-        for i in range(1, len(self.column_names)):
+        for i in range(0, len(self.column_names)):
 
             cur_name = self.column_names[i]
             label = QLabel(cur_name, self)
@@ -46,7 +46,7 @@ class AddRowDialog(QDialog):
         self.add_button = QPushButton('Добавить', self)
         self.add_button.clicked.connect(self.accept)
 
-        layout.addWidget(self.add_button, 10, 0, 1, 2)
+        layout.addWidget(self.add_button)
 
         self.setLayout(layout)
 
@@ -59,6 +59,8 @@ class AddRowDialog(QDialog):
                 lst.append(inp.selectedDate().toString("dd-MM-yyyy"))
             else:
                 lst.append(inp.text())
+        for i in range(25- len(lst)):
+            lst.append('')
         return lst
         #return [input.currentText() if isinstance(input, QComboBox) else input.text() for input in self.line_edits]
 
@@ -206,12 +208,8 @@ class MainWindow(QMainWindow):
                 self.table.setItem(row_position, self.table.columnCount() - i - 1, QTableWidgetItem(""))
 
             lst = data
-            for i in range(5):
-                lst.append("0")
             print(lst)
             self.add_student(lst)
-            self.set_column_color(1, QColor('blue'))  # второй столбец
-            self.set_column_color(2, QColor('blue'))
     def export_csv(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить как CSV", "", "CSV Files (*.csv)")
         if file_path:
