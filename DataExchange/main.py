@@ -1,14 +1,18 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
-from PyQt5.QtWidgets import QHBoxLayout,QVBoxLayout
-from PyQt5.QtWidgets import QLabel, QTabWidget
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QLabel, QTabWidget, QPushButton
 from PyQt5.QtWidgets import QSpacerItem, QSizePolicy
 from PyQt5.QtWidgets import QMenu, QAction
 
 class QMainWindowWithTabs(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.LittleSon = None
         body = {
+            "Файлы": None,
+            "Карты": None,
+            "Докобмен":{
                 "Справочники": {
                         "Загрузка": None,
                         "Обновление": {
@@ -21,8 +25,7 @@ class QMainWindowWithTabs(QMainWindow):
                                 "Категория": None,
                                 "Выполнить": None
                             }
-                        
-                    },
+                        },
                 "ГУК": {
                         "Выгрузка в ГУК" : None,
                         "Загрузка из ГУК" : None
@@ -34,45 +37,88 @@ class QMainWindowWithTabs(QMainWindow):
                 "ВК": {
                         "Выгрузка в ВК" : None,
                         "Загрузка из ВК" : None
-                    }
+                    },
+                "ВУЗы": {
+                        "Выгрузка в ВУЗы" : None,
+                        "Загрузка из ВУЗы" : None
+                    },
+                "Резерв1": None,
+                "Резерв2": None,
+                },
+            "Администрирование": None,
+            "Вид": None,
+            "Отчёты": None,
             }
+        # Создаем QTabWidget для вкладок
+        self.tab_widget = QTabWidget()
+        # Размещаем QTabWidget в основном окне
+        #self.setCentralWidget(self.tab_widget)
         for key1 in body:
-            # Создаем меню <key1>
-            file_menu = self.menuBar().addMenu(key1)
+            # Создаем виджеты для каждой вкладки
+            tab1_widget = QTabWidget()
+            self.tab_widget.addTab(tab1_widget, key1)
+            # Первый уровень вложенности
             body2 = body[key1]
-            if body2 is None:
-                #file_menu.triggered.connect(lambda: self.action(key1))
-                continue
-            # Создаем действие <key2>
-            for key2 in body2:
-                key2_action = QAction(key2, self)
-                file_menu.addAction(key2_action)
-                body3 = body2[key2]
-                if body3 is None:
-                    #file_menu.triggered.connect(lambda: self.action(key1))
-                    continue
-                # Создаем подменю для действия <key2>
-                key2_submenu = QMenu()
-                key2_action.setMenu(key2_submenu)
-                for key3 in body3:
-                    # Добавляем действия <key3> в подменю
-                    key3_action = QAction(key3, self)
-                    key2_submenu.addAction(key3_action)
-                    #Соединяем сигналы со слотами
-                    key3_action.triggered.connect(self.action(key3))
+            if body2 is not None:
+                for key2 in body2:
+                    # Создаем QWidget для вкладок
+                    tab2_widget = QWidget()
+                    tab1_widget.addTab(tab2_widget, key2)
+                    layout1 = QHBoxLayout(tab2_widget)
+                    tab2_widget.setMinimumHeight(50)
+                    tab2_widget.setMaximumHeight(50)
+                    body3 = body2[key2]
+                    if body3 is not None:
+                        for key3 in body3:
+                            button = QPushButton(key3)
+                            button.clicked.connect(self.action(key3, body3[key3]))
+                            layout1.addWidget(button)
+        layout = QVBoxLayout()
+        spacer = QSpacerItem(2000, 4000, QSizePolicy.Maximum, QSizePolicy.Maximum)
+        layout.addWidget(self.tab_widget)
+        layout.addItem(spacer)
+        container = QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
         
-        
-    def action(self, doing):
-        string = doing
+    def action(self, name, body):
         def f():
-            print(string)
+            if self.LittleSon is None:
+                self.LittleSon = LittleWindow(name, body, self)
+            self.LittleSon.show()
+            #self.hide()
             return
         return f
+
+class LittleWindow(QMainWindow):
+    def __init__(self, name, body, parent = None):
+        super().__init__(parent)
+        self.setWindowTitle(name)
+        self.setGeometry(200, 300, 300, 300)
+        
+        layout = QGridLayout()
+        spacer = QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Expanding)
+        for i in range(3):
+            for j in range(3):
+                layout.addItem(spacer, i, j)
+        layout.addItem(spacer, 3, 1)
+        layout.addItem(spacer, 3, 2)
+        
+        button = QPushButton("Отмена")
+        button.clicked.connect(self.goBack)
+        layout.addWidget(button, 3, 0)
+
+        container = QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+    def goBack(self):
+        #self.parent().show()
+        self.hide()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = QMainWindowWithTabs()
-    window.setGeometry(200, 300, 500, 500)
+    window.setGeometry(200, 300, 600, 500)
     window.show()
     sys.exit(app.exec_())
