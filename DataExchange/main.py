@@ -83,8 +83,9 @@ class QMainWindowWithTabs(QMainWindow):
         
     def action(self, name, body):
         def f():
-            if self.LittleSon is None:
-                self.LittleSon = LittleWindow(name, body, self)
+            if self.LittleSon is not None:
+                self.LittleSon.deleteLater()
+            self.LittleSon = LittleWindow(name, body, self)
             self.LittleSon.show()
             #self.hide()
             return
@@ -96,17 +97,12 @@ class LittleWindow(QMainWindow):
         self.setWindowTitle(name)
         self.setGeometry(200, 300, 300, 300)
         
-        layout = QGridLayout()
-        spacer = QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Expanding)
-        for i in range(3):
-            for j in range(3):
-                layout.addItem(spacer, i, j)
-        layout.addItem(spacer, 3, 1)
-        layout.addItem(spacer, 3, 2)
-        
-        button = QPushButton("Отмена")
-        button.clicked.connect(self.goBack)
-        layout.addWidget(button, 3, 0)
+        layout = QVBoxLayout()
+        if body is not None:
+            for key in body:
+                button = QPushButton(key)
+                button.clicked.connect(self.action(key))
+                layout.addWidget(button)
 
         container = QWidget()
         container.setLayout(layout)
@@ -114,7 +110,13 @@ class LittleWindow(QMainWindow):
     def goBack(self):
         #self.parent().show()
         self.hide()
-
+    def action(self, name):
+        title = name
+        if title == "Отмена":
+            return self.goBack
+        def f():
+            return 0
+        return f
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
