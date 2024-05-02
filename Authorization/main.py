@@ -2,7 +2,7 @@ import sys
 import sqlite3
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, \
     QTableWidgetItem, QDialog, QFileDialog, QLabel, QGridLayout, QLineEdit, QComboBox, QAbstractItemView, \
-    QCalendarWidget, QMessageBox
+    QCalendarWidget, QMessageBox, QCheckBox
 from PyQt5.QtGui import QColor
 from StaticResources import TableData
 class MainWindow(QDialog):
@@ -21,11 +21,11 @@ class MainWindow(QDialog):
         self.Login = QLineEdit()
         self.Password = QLineEdit()
         self.ComboBox = QComboBox()
-        self.ComboBox.addItems(["ВК", "ОВУ", "ВВУЗ", "ГУК"])
+        self.ComboBox.addItems(["ВК", "ОВУ в/ч", "ВВУЗ", "ГУК"])
         #self.ComboBox.currentIndexChanged.connect(self.changedComboBox())
         self.ComboBox.currentTextChanged.connect(self.changedComboBox)
-        self.lineEdits = [self.SurnameTextBox, self.Name, self.FatherName, self.Post,self.Contacts,  self.Login, self.Password, self.ComboBox]
-        lineEditNames = ["Фамилия", "Имя", "Отчество", "Должность", "Контакты", "Логин", "Пароль", "Тип организации"]
+        self.lineEdits = [ self.ComboBox, self.SurnameTextBox, self.Name, self.FatherName, self.Post,self.Contacts,  self.Login, self.Password]
+        lineEditNames = ["Организации", "Фамилия", "Имя", "Отчество", "Должность", "Контакты", "Логин", "Пароль" ]
         self.setLayout(self.layout)
         for i in range(self.StaticElementsCount):
             self.layout.addWidget(QLabel(lineEditNames[i]), i, 0)
@@ -61,22 +61,36 @@ class MainWindow(QDialog):
         self.MunVKComboBox.addItems(self.getDynamicComboBoxLists())
 
         self.VKComboBoxes = [self.OkrugComboBox, self.VKSubjectComboBox, self.MunVKComboBox]
-        strlst = ["Округ", "СВК субъекта", "Муниципальный ВК"]
+        strlst = ["Округ", "ВК субъекта", "Муниципальный ВК"]
         self.VKLabels = []
         for i in strlst:
-            self.VKLabels.append(QLabel(i))
+            if i == "Муниципальный ВК":
+                tmp = QCheckBox()
+                tmp.setChecked(True)
+                tmp.setText(i)
+                self.VKLabels.append(tmp)
+            else:
+                self.VKLabels.append(QLabel(i))
         for i in range(len(strlst)):
             self.layout.addWidget(self.VKLabels[i], i + self.StaticElementsCount, 0)
             self.layout.addWidget(self.VKComboBoxes[i], i+self.StaticElementsCount, 1)
         self.addButtons( self.StaticElementsCount + len(strlst))
     def createOVU_UI(self):
         self.OkrugComboBox = QComboBox()
+        self.VChComboBox = QComboBox()
         self.OkrugComboBox.addItems(self.getDynamicComboBoxLists())
-        self.OVUComboBoxes= [self.OkrugComboBox]
-        strlst = ["Округ"]
+        self.VChComboBox.addItems(self.getDynamicComboBoxLists())
+        self.OVUComboBoxes= [self.OkrugComboBox, self.VChComboBox]
+        strlst = ["Округ", "ВЧ"]
         self.OVULabels = []
         for i in strlst:
-            self.OVULabels.append(QLabel(i))
+            if i == 'ВЧ':
+                check = QCheckBox()
+                check.setChecked(True)
+                check.setText(i)
+                self.OVULabels.append(check)
+            else:
+                self.OVULabels.append(QLabel(i))
         for i in range(len(strlst)):
             self.layout.addWidget(self.OVULabels[i], i+self.StaticElementsCount,  0)
             self.layout.addWidget(self.OVUComboBoxes[i], i+self.StaticElementsCount, 1)
@@ -93,7 +107,7 @@ class MainWindow(QDialog):
             self.layout.addWidget(self.VVUZLabels[i], i+self.StaticElementsCount, 0)
             self.layout.addWidget(self.VVUZComboBoxes[i], i+self.StaticElementsCount, 1)
         self.addButtons(self.StaticElementsCount + len(strlst))
-    def createGUI_UI(self):
+    def createGUK_UI(self):
         self.addButtons(self.StaticElementsCount)
     def hide_all(self):
         try:
@@ -118,7 +132,7 @@ class MainWindow(QDialog):
         self.tryToDelete(lst)
         self.tryToDelete(self.VKLabels)
     def hide_OVU(self):
-        lst = [self.OkrugComboBox]
+        lst = [self.OkrugComboBox, self.VChComboBox]
         self.tryToDelete(lst)
         self.tryToDelete(self.OVULabels)
     def hide_VVUZ(self ):
@@ -136,12 +150,12 @@ class MainWindow(QDialog):
         self.hide_all()
         if self.ComboBox.currentText() == "ВК":
             self.createVK_UI()
-        elif self.ComboBox.currentText() == "ОВУ":
+        elif self.ComboBox.currentText() == "ОВУ в/ч":
             self.createOVU_UI()
         elif self.ComboBox.currentText() == "ВВУЗ":
             self.createVVUZ_UI()
         elif self.ComboBox.currentText() == "ГУК":
-            self.createGUI_UI()
+            self.createGUK_UI()
     def checkForFilling(self):
         lst = []
         for i in range(len(self.lineEdits)):

@@ -119,11 +119,13 @@ class MainWindow(QMainWindow):
         self.import_button.clicked.connect(self.import_csv)
         self.FilterButton = QPushButton('Применить фильтры')
         self.FilterButton.clicked.connect(self.update_table_filter_view)
+        self.SurnameTextBox = QLineEdit()
         self.create_filter_widget()
         central_widget = QWidget()
 
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.checkable_combobox_list)
+        layout.addWidget(self.SurnameTextBox)
         layout.addWidget(self.FilterButton)
         layout.addWidget(self.table)
         layout.addWidget(self.add_row_button)
@@ -214,6 +216,12 @@ class MainWindow(QMainWindow):
         for k in keys:
             request += self.sql_request(cursor,k, self.checkable_combobox_list.TotalDict[k]) + 'AND '
         request = request[0:len(request) -4]
+        # if surname filter
+        surnameReq = self.sql_request_surname()
+        if surnameReq != "":
+            if len(request) > 0:
+                request += " AND "
+            request += surnameReq
         if len(request) > 0:
             request = "WHERE " + request
         #cursor.execute(f"SELECT * FROM Students ({request})")
@@ -233,7 +241,10 @@ class MainWindow(QMainWindow):
         values = values[0:len(values)-1]
         res = f'{columnName} IN ({values})'
         return res
-
+    def sql_request_surname(self):
+        if self.SurnameTextBox.text() == "":
+            return ""
+        return f"instr(Surname, \"{self.SurnameTextBox.text()}\") > 0"
     def add_record(self, list:list):
         if not(self.check_record_uniqness(list)):
             return
