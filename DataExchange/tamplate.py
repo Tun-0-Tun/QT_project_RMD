@@ -4,19 +4,22 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QGridLayout
 from PyQt5.QtWidgets import QLabel, QTabWidget, QPushButton
 from PyQt5.QtWidgets import QSpacerItem, QSizePolicy
 from PyQt5.QtWidgets import QMenu, QAction
-from PyQt5.QtCore import Qt
-
 
 class QMainWindowWithTabs(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.loaging_window = None
-        self.update_window = None
+        self.LittleSon = None
         body = {
             "Файлы": None,
             "Карты": None,
             "Докобмен":{
                 "Справочники": {
+                        "Загрузка": None,
+                        "Обновление": {
+                                "Путь к файлу": None,
+                                "Выполнить": None,
+                                "Отмена": None
+                            },
                         "Предложения": {
                                 "ВУЗы": None,
                                 "Категория": None,
@@ -53,24 +56,8 @@ class QMainWindowWithTabs(QMainWindow):
             }
         # Создаем QTabWidget для вкладок
         self.tab_widget = QTabWidget()
-        
-        layout = QVBoxLayout()
-
-        spacer = QSpacerItem(2000, 4000, QSizePolicy.Maximum, QSizePolicy.Maximum)
-
-        layout.addWidget(self.tab_widget)
-        layout.addItem(spacer)
-
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-
-        self.Tab_Files()
-        self.Tab_Maps()
-        self.Tab_DocExch()
-        self.Tab_Administration()
-        '''
         # Размещаем QTabWidget в основном окне
+        #self.setCentralWidget(self.tab_widget)
         for key1 in body:
             # Создаем виджеты для каждой вкладки
             tab1_widget = QTabWidget()
@@ -91,109 +78,31 @@ class QMainWindowWithTabs(QMainWindow):
                             button = QPushButton(key3)
                             button.clicked.connect(self.action(key3, body3[key3]))
                             layout1.addWidget(button)
-                            '''   
-    def Tab_Files(self):
-        FilesTab = QTabWidget()
-        self.tab_widget.addTab(FilesTab, "Файлы")
-        
-    def Tab_Maps(self):
-        MapsTab = QTabWidget()
-        self.tab_widget.addTab(MapsTab, "Карты")
-        
-    def Tab_DocExch(self):
-        DocExchTab = QTabWidget()
-        self.tab_widget.addTab(DocExchTab, "Докобмен")
-
-        GuideTab = QWidget()
-        DocExchTab.addTab(GuideTab, "Справочники")
-
-        layout1 = QHBoxLayout(GuideTab)
-        GuideTab.setMinimumHeight(50)
-        GuideTab.setMaximumHeight(50)
-        
-        button = QPushButton("Загрузка")
-        layout1.addWidget(button)
-        button.clicked.connect(lambda: Loading(self).show())
-
-        button = QPushButton("Обновление")
-        layout1.addWidget(button)
-        button.clicked.connect(lambda: Update(self).show())
-        
-        button = QPushButton("Предложения")
-        layout1.addWidget(button)
-        button.clicked.connect(lambda: Loading(self).show())
-        
-    def Tab_Administration(self):
-        AdministrationTab = QTabWidget()
-        self.tab_widget.addTab(AdministrationTab, "Администрирование")
-
-
-class Loading(QMainWindow):
-    def __init__(self, parent = None):
-        super().__init__(parent)
-        self.setGeometry(200, 300, 200, 100)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
-        
         layout = QVBoxLayout()
-        layout1 = QVBoxLayout()
-        layout2 = QHBoxLayout()
-        layout.addLayout(layout1)
-        layout.addLayout(layout2)
-
-        path_button = QPushButton("Путь к файлу")
-        layout1.addWidget(path_button)
-        path_button.clicked.connect(lambda: None)
-
-        execute_button = QPushButton("Выполнить")
-        layout2.addWidget(execute_button)
-        execute_button.setStyleSheet("background-color: #80FF80;")#Зелёный
-        execute_button.clicked.connect(lambda: None)
-        
-        cancel_button = QPushButton("Отмена")
-        layout2.addWidget(cancel_button)
-        cancel_button.setStyleSheet("background-color: #FF8080;")#Красный
-        cancel_button.clicked.connect(lambda: None)
-        
+        spacer = QSpacerItem(2000, 4000, QSizePolicy.Maximum, QSizePolicy.Maximum)
+        layout.addWidget(self.tab_widget)
+        layout.addItem(spacer)
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
-
-class Update(QMainWindow):
-    def __init__(self, parent = None):
-        super().__init__(parent)
-        self.setGeometry(200, 300, 200, 100)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
         
-        layout = QVBoxLayout()
-        layout1 = QVBoxLayout()
-        layout2 = QHBoxLayout()
-        layout.addLayout(layout1)
-        layout.addLayout(layout2)
+    def action(self, name, body):
+        def f():
+            if self.LittleSon is not None:
+                self.LittleSon.deleteLater()
+            self.LittleSon = LittleWindow(name, body, self)
+            self.LittleSon.show()
+            #self.hide()
+            return
+        return f
 
-        path_button = QPushButton("Путь к файлу")
-        layout1.addWidget(path_button)
-        path_button.clicked.connect(lambda: None)
-
-        execute_button = QPushButton("Выполнить")
-        layout2.addWidget(execute_button)
-        execute_button.setStyleSheet("background-color: #80FF80;")#Зелёный
-        execute_button.clicked.connect(lambda: None)
-        
-        cancel_button = QPushButton("Отмена")
-        layout2.addWidget(cancel_button)
-        cancel_button.setStyleSheet("background-color: #FF8080;")#Красный
-        cancel_button.clicked.connect(lambda: None)
-        
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-'''
 class LittleWindow(QMainWindow):
     def __init__(self, name, body, parent = None):
         super().__init__(parent)
         self.setWindowTitle(name)
         self.setGeometry(200, 300, 300, 300)
         
+        layout = QVBoxLayout()
         if body is not None:
             for key in body:
                 button = QPushButton(key)
@@ -213,8 +122,6 @@ class LittleWindow(QMainWindow):
         def f():
             return 0
         return f
-'''
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
