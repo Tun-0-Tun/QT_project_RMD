@@ -11,7 +11,6 @@ class MainWindow(QDialog):
         self.setWindowTitle("Регистрация нового пользователя")
         self.UI()
     def UI(self):
-        flag = 0
         self.StaticElementsCount = 8
         self.layout = QGridLayout()
         self.SurnameTextBox = QLineEdit()
@@ -29,12 +28,11 @@ class MainWindow(QDialog):
         lineEditNames = ["Фамилия", "Имя", "Отчество", "Должность", "Контакты", "Логин", "Пароль", "Тип организации"]
         self.setLayout(self.layout)
         for i in range(self.StaticElementsCount):
-            self.layout.addWidget(QLabel(lineEditNames[i]), i + flag, 0)
-            self.layout.addWidget(self.lineEdits[i], i + flag, 1)
-            self.layout.setRowMinimumHeight(i + flag, 10)
+            self.layout.addWidget(QLabel(lineEditNames[i]), i, 0)
+            self.layout.addWidget(self.lineEdits[i], i, 1)
+            self.layout.setRowMinimumHeight(i, 10)
         self.createVK_UI()
     def addButtons(self, row:int):
-
         self.CancelButton = QPushButton()
         self.CancelButton.setText("Отмена")
         self.OKButton = QPushButton()
@@ -42,7 +40,6 @@ class MainWindow(QDialog):
         self.OKButton.clicked.connect(self.Finish)
         self.layout.addWidget(self.CancelButton,row, 0)
         self.layout.addWidget(self.OKButton, row, 1)
-
     def getDynamicComboBoxLists(self):
         return ['Var1', 'Var2', 'Var3']
     def Finish(self):
@@ -52,7 +49,6 @@ class MainWindow(QDialog):
             msg_box = QMessageBox()
             msg_box.setText("Заполните все поля")
             retval = msg_box.exec_()
-
     def createVK_UI(self):
         self.OkrugComboBox = QComboBox()
         self.OkrugComboBox.addItems(self.getDynamicComboBoxLists())
@@ -60,7 +56,6 @@ class MainWindow(QDialog):
         self.VKSubjectComboBox.addItems(self.getDynamicComboBoxLists())
         self.MunVKComboBox = QComboBox()
         self.MunVKComboBox.addItems(self.getDynamicComboBoxLists())
-
         self.VKComboBoxes = [self.OkrugComboBox, self.VKSubjectComboBox, self.MunVKComboBox]
         strlst = ["Округ", "СВК субъекта", "Муниципальный ВК"]
         self.VKLabels = []
@@ -188,12 +183,9 @@ class MainWindow(QDialog):
                 return False
         return True
 
-
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
     window.setGeometry(200, 300, 500, 500)
-    window.setFixedSize(500, 500)
     window.show()
     sys.exit(app.exec_())
