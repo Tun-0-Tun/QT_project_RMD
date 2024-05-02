@@ -11,8 +11,22 @@ class MainWindow(QDialog):
         self.setWindowTitle("Регистрация нового пользователя")
         self.UI()
     def UI(self):
-        self.StaticElementsCount = 8
+        self.ElementsCount = 1
         self.layout = QGridLayout()
+        self.init_static()
+        self.ComboBox = QComboBox()
+        self.ComboBox.addItems(["ВК", "ОВУ в/ч", "ВВУЗ", "ГУК"])
+        #self.ComboBox.currentIndexChanged.connect(self.changedComboBox())
+        self.ComboBox.currentTextChanged.connect(self.changedComboBox)
+
+        self.StaticElementsLabelsText = ["Фамилия", "Имя", "Отчество", "Должность", "Контакты", "Логин", "Пароль" ]
+        self.setLayout(self.layout)
+        self.layout.addWidget(QLabel("Организация"), 0, 0)
+        self.layout.addWidget(self.ComboBox, 0, 1)
+
+        self.createVK_UI()
+        self.createStatic_UI()
+    def init_static(self):
         self.SurnameTextBox = QLineEdit()
         self.Name = QLineEdit()
         self.FatherName = QLineEdit()
@@ -20,26 +34,25 @@ class MainWindow(QDialog):
         self.Contacts = QLineEdit()
         self.Login = QLineEdit()
         self.Password = QLineEdit()
-        self.ComboBox = QComboBox()
-        self.ComboBox.addItems(["ВК", "ОВУ в/ч", "ВВУЗ", "ГУК"])
-        #self.ComboBox.currentIndexChanged.connect(self.changedComboBox())
-        self.ComboBox.currentTextChanged.connect(self.changedComboBox)
-        self.lineEdits = [ self.ComboBox, self.SurnameTextBox, self.Name, self.FatherName, self.Post,self.Contacts,  self.Login, self.Password]
-        lineEditNames = ["Организации", "Фамилия", "Имя", "Отчество", "Должность", "Контакты", "Логин", "Пароль" ]
-        self.setLayout(self.layout)
-        for i in range(self.StaticElementsCount):
-            self.layout.addWidget(QLabel(lineEditNames[i]), i, 0)
-            self.layout.addWidget(self.lineEdits[i], i, 1)
+        self.StaticElements = [self.SurnameTextBox, self.Name, self.FatherName, self.Post, self.Contacts, self.Login,
+                               self.Password]
+    def createStatic_UI(self):
+        self.StaticLabels = []
+        self.init_static()
+        for i in range(len(self.StaticElementsLabelsText)):
+            tmp = QLabel(self.StaticElementsLabelsText[i])
+            self.StaticLabels.append(tmp)
+            self.layout.addWidget(tmp, i+ self.ElementsCount, 0)
+            self.layout.addWidget(self.StaticElements[i], i + self.ElementsCount, 1)
             self.layout.setRowMinimumHeight(i, 10)
-        self.createVK_UI()
-    def addButtons(self, row:int):
+    def addButtons(self):
         self.CancelButton = QPushButton()
         self.CancelButton.setText("Отмена")
         self.OKButton = QPushButton()
         self.OKButton.setText("Сохранить")
         self.OKButton.clicked.connect(self.Finish)
-        self.layout.addWidget(self.CancelButton,row, 0)
-        self.layout.addWidget(self.OKButton, row, 1)
+        self.layout.addWidget(self.CancelButton,self.ElementsCount + 7, 0)
+        self.layout.addWidget(self.OKButton, self.ElementsCount + 7, 1)
     def getDynamicComboBoxLists(self):
         return ['Var1', 'Var2', 'Var3']
     def Finish(self):
@@ -68,9 +81,10 @@ class MainWindow(QDialog):
             else:
                 self.VKLabels.append(QLabel(i))
         for i in range(len(strlst)):
-            self.layout.addWidget(self.VKLabels[i], i + self.StaticElementsCount, 0)
-            self.layout.addWidget(self.VKComboBoxes[i], i+self.StaticElementsCount, 1)
-        self.addButtons( self.StaticElementsCount + len(strlst))
+            self.layout.addWidget(self.VKLabels[i], i +1, 0)
+            self.layout.addWidget(self.VKComboBoxes[i], i+1, 1)
+        #self.addButtons( self.StaticElementsCount + len(strlst))
+        self.ElementsCount = 4
     def createOVU_UI(self):
         self.OkrugComboBox = QComboBox()
         self.VChComboBox = QComboBox()
@@ -88,9 +102,10 @@ class MainWindow(QDialog):
             else:
                 self.OVULabels.append(QLabel(i))
         for i in range(len(strlst)):
-            self.layout.addWidget(self.OVULabels[i], i+self.StaticElementsCount,  0)
-            self.layout.addWidget(self.OVUComboBoxes[i], i+self.StaticElementsCount, 1)
-        self.addButtons(self.StaticElementsCount + len(strlst))
+            self.layout.addWidget(self.OVULabels[i], i+1,  0)
+            self.layout.addWidget(self.OVUComboBoxes[i], i+1, 1)
+        self.ElementsCount = 3
+        #self.addButtons(self.StaticElementsCount + len(strlst))
     def createVVUZ_UI(self):
         self.VVUZComboBox = QComboBox()
         self.VVUZComboBox.addItems(self.getDynamicComboBoxLists())
@@ -100,11 +115,10 @@ class MainWindow(QDialog):
         for i in strlst:
             self.VVUZLabels.append(QLabel(i))
         for i in range(len(strlst)):
-            self.layout.addWidget(self.VVUZLabels[i], i+self.StaticElementsCount, 0)
-            self.layout.addWidget(self.VVUZComboBoxes[i], i+self.StaticElementsCount, 1)
-        self.addButtons(self.StaticElementsCount + len(strlst))
-    def createGUK_UI(self):
-        self.addButtons(self.StaticElementsCount)
+            self.layout.addWidget(self.VVUZLabels[i], i+1, 0)
+            self.layout.addWidget(self.VVUZComboBoxes[i], i+1, 1)
+        self.ElementsCount = 2
+        #self.addButtons(self.StaticElementsCount + len(strlst))
     def hide_all(self):
         try:
             self.OKButton.deleteLater()
@@ -123,6 +137,10 @@ class MainWindow(QDialog):
             self.hide_VVUZ()
         except:
             print('error')
+        try:
+            self.hide_static()
+        except:
+            print('error')
     def hide_VK(self):
         lst = [self.OkrugComboBox, self.VKSubjectComboBox, self.MunVKComboBox]
         self.tryToDelete(lst)
@@ -135,6 +153,9 @@ class MainWindow(QDialog):
         lst = [ self.VVUZComboBox]
         self.tryToDelete(lst)
         self.tryToDelete(self.VVUZLabels)
+    def hide_static(self):
+        self.tryToDelete(self.StaticElements)
+        self.tryToDelete(self.StaticLabels)
     def tryToDelete(self, lst:list):
         for i in lst:
             try:
@@ -151,7 +172,9 @@ class MainWindow(QDialog):
         elif self.ComboBox.currentText() == "ВВУЗ":
             self.createVVUZ_UI()
         elif self.ComboBox.currentText() == "ГУК":
-            self.createGUK_UI()
+            self.ElementsCount = 1
+        self.createStatic_UI()
+        self.addButtons()
     def checkForFilling(self):
         lst = []
         for i in range(len(self.lineEdits)):
