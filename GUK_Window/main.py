@@ -14,6 +14,8 @@ import MyQTWidgets.CheckableComboBoxesList
 import StaticResources.TableData
 from MyQTWidgets import checkableComboBox
 from PyQt5.uic.properties import QtWidgets
+from DataExchange.main import QMainWindowWithTabs
+
 
 
 from StaticResources import TableData
@@ -84,7 +86,7 @@ class EditRowDialog(QDialog):
 
 
 
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindowWithTabs):
     def __init__(self):
         super().__init__()
         self.design_set()

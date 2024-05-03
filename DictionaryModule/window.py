@@ -8,7 +8,7 @@ import Authorization.main
 import DictionaryModule.basicFunctions
 
 
-class Authorization(QMainWindow):
+class ReferencesWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.design_set()
@@ -143,7 +143,7 @@ class Authorization(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = Authorization()
+    window = ReferencesWindow()
     window.setGeometry(200, 300, 1000, 750)
     window.show()
     sys.exit(app.exec_())

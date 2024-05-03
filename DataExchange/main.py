@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import QSpacerItem, QSizePolicy
 from PyQt5.QtWidgets import QMenu, QAction
 from PyQt5.QtCore import Qt
 
+from DictionaryModule.window import ReferencesWindow
+
 
 class QMainWindowWithTabs(QMainWindow):
     def __init__(self):
@@ -52,7 +54,6 @@ class QMainWindowWithTabs(QMainWindow):
             }
         # Создаем QTabWidget для вкладок
         self.tab_widget = QTabWidget()
-        self.tab_widget.setTabPosition(QTabWidget.West)
         
         layout = QVBoxLayout()
 
@@ -102,37 +103,15 @@ class QMainWindowWithTabs(QMainWindow):
         DocExchTab = QTabWidget()
         self.tab_widget.addTab(DocExchTab, "Докобмен")
 
-        GuideTab = QWidget()
-        DocExchTab.addTab(GuideTab, "Справочники")
+        self.Tab_DocExch_References(DocExchTab)
 
-        layout1 = QHBoxLayout(GuideTab)
-        #GuideTab.setMinimumHeight(50)
-        #GuideTab.setMaximumHeight(50)
-        
-        button = QPushButton("Загрузка")
-        layout1.addWidget(button)
-        button.clicked.connect(lambda: Loading(self).show())
-
-        button = QPushButton("Обновление")
-        layout1.addWidget(button)
-        button.clicked.connect(lambda: Update(self).show())
-        
-        button = QPushButton("Предложения")
-        layout1.addWidget(button)
-        button.clicked.connect(lambda: Loading(self).show())
-    '''
-    def Tab_DocExch(self):
-        DocExchTab = QTabWidget()
-        self.tab_widget.addTab(DocExchTab, "Докобмен")
-
-        self.Tab_DocExch_References(DocExchTab)'''
     def Tab_DocExch_References(self, DocExchTab):
         GuideTab = QWidget()
         DocExchTab.addTab(GuideTab, "Справочники")
 
         layout1 = QHBoxLayout(GuideTab)
-        #GuideTab.setMinimumHeight(50)
-        #GuideTab.setMaximumHeight(50)
+        GuideTab.setMinimumHeight(50)
+        GuideTab.setMaximumHeight(50)
         
         button = QPushButton("Загрузка")
         layout1.addWidget(button)
@@ -140,7 +119,7 @@ class QMainWindowWithTabs(QMainWindow):
 
         button = QPushButton("Обновление")
         layout1.addWidget(button)
-        button.clicked.connect(lambda: Update(self).show())
+        button.clicked.connect(lambda: ReferencesWindow().show())
         
         button = QPushButton("Предложения")
         layout1.addWidget(button)
@@ -184,7 +163,7 @@ class Loading(QSmallWindow):
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
-
+''' Unused
 class Update(QSmallWindow):
     def __init__(self, parent = None):
         super().__init__(parent)
@@ -213,7 +192,7 @@ class Update(QSmallWindow):
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
-
+'''
 
 
 if __name__ == '__main__':
