@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QFileDialog, QMainWindow, QLineEdit, QGridLayout, QL
 import Authorization.main
 
 
-class MainWindow(QDialog):
+class Authorization(QDialog):
     def __init__(self):
         super().__init__()
         self.design_set()
@@ -129,7 +129,7 @@ class MainWindow(QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = Authorization()
     window.setGeometry(200, 300, 250, 120)
     window.show()
     sys.exit(app.exec_())
