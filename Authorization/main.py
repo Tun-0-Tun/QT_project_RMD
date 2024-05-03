@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPu
     QCalendarWidget, QMessageBox, QCheckBox
 from PyQt5.QtGui import QColor
 from StaticResources import TableData
-class MainWindow(QDialog):
+class Regisration(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Регистрация нового пользователя")
@@ -26,6 +26,7 @@ class MainWindow(QDialog):
 
         self.createVK_UI()
         self.createStatic_UI()
+        self.addButtons()
     def init_static(self):
         self.SurnameTextBox = QLineEdit()
         self.Name = QLineEdit()
@@ -57,6 +58,7 @@ class MainWindow(QDialog):
         return ['Var1', 'Var2', 'Var3']
     def Finish(self):
         if self.checkForFilling():
+            self.get_data()
             self.accept()
         else:
             msg_box = QMessageBox()
@@ -88,10 +90,11 @@ class MainWindow(QDialog):
     def createOVU_UI(self):
         self.OkrugComboBox = QComboBox()
         self.VChComboBox = QComboBox()
+        self.VChComboBox.setEditable(True)
         self.OkrugComboBox.addItems(self.getDynamicComboBoxLists())
         self.VChComboBox.addItems(self.getDynamicComboBoxLists())
         self.OVUComboBoxes= [self.OkrugComboBox, self.VChComboBox]
-        strlst = ["Округ", "ВЧ"]
+        strlst = ["ОВУ", "ВЧ"]
         self.OVULabels = []
         for i in strlst:
             if i == 'ВЧ':
@@ -177,52 +180,56 @@ class MainWindow(QDialog):
         self.addButtons()
     def checkForFilling(self):
         lst = []
-        for i in range(len(self.lineEdits)):
+        for i in range(len(self.StaticElements)):
             txt = ""
-            if isinstance(self.lineEdits[i], QLineEdit):
-                txt = self.lineEdits[i].text()
-            elif isinstance(self.lineEdits[i], QComboBox):
-                txt = self.lineEdits[i].currentText()
+            if isinstance(self.StaticElements[i], QLineEdit):
+                txt = self.StaticElements[i].text()
+            elif isinstance(self.StaticElements[i], QComboBox):
+                txt = self.StaticElements[i].currentText()
             if(txt == ""):
                 return False
-        addlst = []
-        if self.ComboBox.currentText() == "ВК":
-            addlst = self.VKComboBoxes
-        elif self.ComboBox.currentText() == "ОВУ":
-            addlst = self.OVUComboBoxes
-        elif self.ComboBox.currentText() == "ВВУЗ":
-            addlst = self.VVUZComboBoxes
-        else:
-            lst = []
-        for i in range(addlst):
-            lst.append(addlst[i].currentText())
-        return lst
-    def get_data(self):
-        lst = []
-        for i in range(len(self.lineEdits)):
-            txt = ""
-            if isinstance(self.lineEdits[i], QLineEdit):
-                txt = self.lineEdits[i].text()
-            elif isinstance(self.lineEdits[i], QComboBox):
-                txt = self.lineEdits[i].currentText()
-            lst.append(txt)
-        addlst = []
-        if self.ComboBox.currentText() == "ВК":
-            addlst = self.VKComboBoxes
-        elif self.ComboBox.currentText() == "ОВУ":
-            addlst = self.OVUComboBoxes
-        elif self.ComboBox.currentText() == "ВВУЗ":
-            addlst = self.VVUZComboBoxes
-        else:
-            lst = []
-        for i in range(addlst):
-            if (addlst[i].currentText() == ""):
-                return False
         return True
+    def getVKData(self):
+        return [self.OkrugComboBox.currentText(), self.VKSubjectComboBox.currentText(), self.VKLabels[2].isChecked(),self.MunVKComboBox.currentText()]
+    def getOVUData(self):
+        return [self.OkrugComboBox.currentText(), self.OVULabels[1].isChecked(), self.VChComboBox.currentText()]
+    def getVVUZData(self):
+        return [self.VVUZComboBox.currentText()]
+    def getStaticData(self):
+        return [self.Login.text(), self.Password.text(), self.SurnameTextBox.text(), self.Name.text(), self.FatherName.text(), self.Post.text(), self.Contacts.text()]
+    def addList(self, list1:list, list2:list):
+        for i in list2:
+            list1.append(i)
+        return list1
+    def get_data(self):
+        reslist = []
+        if self.ComboBox.currentText() == "ВК":
+            stat = self.getStaticData()
+            dyn = self.getVKData()
+            reslist.append("ВК")
+            reslist = self.addList(reslist, stat)
+            reslist = self.addList(reslist, dyn)
+        elif self.ComboBox.currentText() == "ОВУ в/ч":
+            stat = self.getStaticData()
+            dyn = self.getOVUData()
+            reslist.append("ВК")
+            reslist = self.addList(reslist, stat)
+            reslist = self.addList(reslist, dyn)
+        elif self.ComboBox.currentText() == "ВВУЗ":
+            stat = self.getStaticData()
+            dyn = self.getVVUZData()
+            reslist.append("ВК")
+            reslist = self.addList(reslist, stat)
+            reslist = self.addList(reslist, dyn)
+        else:
+            reslist.append("ГУК")
+            reslist = self.addList(reslist, self.getStaticData())
+        print(reslist)
+        return reslist
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = Regisration()
     window.setGeometry(200, 300, 500, 500)
     window.show()
     sys.exit(app.exec_())
