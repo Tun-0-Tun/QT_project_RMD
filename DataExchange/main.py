@@ -10,8 +10,7 @@ from PyQt5.QtCore import Qt
 class QMainWindowWithTabs(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.loaging_window = None
-        self.update_window = None
+        self.son_window = None
         body = {
             "Файлы": None,
             "Карты": None,
@@ -53,14 +52,13 @@ class QMainWindowWithTabs(QMainWindow):
             }
         # Создаем QTabWidget для вкладок
         self.tab_widget = QTabWidget()
+        self.tab_widget.setTabPosition(QTabWidget.West)
         
         layout = QVBoxLayout()
 
-        spacer = QSpacerItem(2000, 4000, QSizePolicy.Maximum, QSizePolicy.Maximum)
-
+        
         layout.addWidget(self.tab_widget)
-        layout.addItem(spacer)
-
+        
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
@@ -108,8 +106,33 @@ class QMainWindowWithTabs(QMainWindow):
         DocExchTab.addTab(GuideTab, "Справочники")
 
         layout1 = QHBoxLayout(GuideTab)
-        GuideTab.setMinimumHeight(50)
-        GuideTab.setMaximumHeight(50)
+        #GuideTab.setMinimumHeight(50)
+        #GuideTab.setMaximumHeight(50)
+        
+        button = QPushButton("Загрузка")
+        layout1.addWidget(button)
+        button.clicked.connect(lambda: Loading(self).show())
+
+        button = QPushButton("Обновление")
+        layout1.addWidget(button)
+        button.clicked.connect(lambda: Update(self).show())
+        
+        button = QPushButton("Предложения")
+        layout1.addWidget(button)
+        button.clicked.connect(lambda: Loading(self).show())
+    '''
+    def Tab_DocExch(self):
+        DocExchTab = QTabWidget()
+        self.tab_widget.addTab(DocExchTab, "Докобмен")
+
+        self.Tab_DocExch_References(DocExchTab)'''
+    def Tab_DocExch_References(self, DocExchTab):
+        GuideTab = QWidget()
+        DocExchTab.addTab(GuideTab, "Справочники")
+
+        layout1 = QHBoxLayout(GuideTab)
+        #GuideTab.setMinimumHeight(50)
+        #GuideTab.setMaximumHeight(50)
         
         button = QPushButton("Загрузка")
         layout1.addWidget(button)
@@ -127,12 +150,16 @@ class QMainWindowWithTabs(QMainWindow):
         AdministrationTab = QTabWidget()
         self.tab_widget.addTab(AdministrationTab, "Администрирование")
 
-
-class Loading(QMainWindow):
+class QSmallWindow(QMainWindow):
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setGeometry(200, 300, 200, 100)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
+
+class Loading(QSmallWindow):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.setWindowTitle("Загрузка")
         
         layout = QVBoxLayout()
         layout1 = QVBoxLayout()
@@ -158,12 +185,11 @@ class Loading(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
-class Update(QMainWindow):
+class Update(QSmallWindow):
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setGeometry(200, 300, 200, 100)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
-        
+        self.setWindowTitle("Обновление")
+
         layout = QVBoxLayout()
         layout1 = QVBoxLayout()
         layout2 = QHBoxLayout()
@@ -182,38 +208,12 @@ class Update(QMainWindow):
         cancel_button = QPushButton("Отмена")
         layout2.addWidget(cancel_button)
         cancel_button.setStyleSheet("background-color: #FF8080;")#Красный
-        cancel_button.clicked.connect(lambda: None)
+        cancel_button.clicked.connect(lambda: self.close())
         
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
-'''
-class LittleWindow(QMainWindow):
-    def __init__(self, name, body, parent = None):
-        super().__init__(parent)
-        self.setWindowTitle(name)
-        self.setGeometry(200, 300, 300, 300)
-        
-        if body is not None:
-            for key in body:
-                button = QPushButton(key)
-                button.clicked.connect(self.action(key))
-                layout.addWidget(button)
 
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-    def goBack(self):
-        #self.parent().show()
-        self.hide()
-    def action(self, name):
-        title = name
-        if title == "Отмена":
-            return self.goBack
-        def f():
-            return 0
-        return f
-'''
 
 
 if __name__ == '__main__':
