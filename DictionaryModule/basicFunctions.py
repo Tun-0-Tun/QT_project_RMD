@@ -72,7 +72,8 @@ def get_total_dictionary():
         totalDict = dict()
         tmp = cursor.fetchall()
         for lst in tmp:
-            totalDict[lst[0]] = list(lst)[2:len(lst)]
+            currentLen = int(lst[1])
+            totalDict[lst[0]] = list(lst)[2:2 + currentLen]
 
         cursor.close()
         connection.close()
@@ -110,5 +111,26 @@ def remove_dict(dictName:str):
         connection.close()
     except:
         print('error')
-add_dict("Округ", ["Центральный", "Северо-Западный", "Приволжский", "Южный","Северо-Кавкасзкий", "Уральский", "Сибирский", "Дальневосточный" ])
-add_dict("Звание", ["Рядовой", "Ефрейтор", "Мл. сержант", "Сержант", "Ст. сержант", "Старшина"])
+
+def export_csv(file_path):
+    if file_path:
+        with open(file_path, 'w') as file:
+            dict = get_total_dictionary()
+            string = ""
+            for i in dict.keys():
+                string = str(i)
+                lst = list()
+                for j in range(len(dict[i])):
+                    lst.append(str(dict[i][j]))
+                tmp = ','.join(lst)
+                string += ',' + tmp + '\n'
+                file.write(string)
+def import_csv(file_path):
+    if file_path:
+        with open(file_path, 'r') as file:
+            data = file.readlines()
+            for i in range(len(data)):
+                tmp = data[i].split(',')
+                tmp[-1] = tmp[-1][0:len(tmp[-1])-1]
+                add_dict(tmp[0], tmp[1:len(tmp)])
+
